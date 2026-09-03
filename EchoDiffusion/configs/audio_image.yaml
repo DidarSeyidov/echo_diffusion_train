@@ -1,0 +1,133 @@
+# EchoDiffusion -- audio + image (DINOv2 ViT-adapter) trajectory diffusion.
+#
+# Identical to audio_only.yaml except for the image branch.  Every audio
+# setting is repeated verbatim so the two configs stay diffable, and so an
+# ablation is a single file swap.
+#
+# Requires episodes prepared WITH camera frames (dataset.topics.image set in
+# the prepare config); otherwise training fails fast with a clear message.
+
+seed: 42
+
+paths:
+  train_dir: data/episodes/train
+  val_dir: data/episodes/val
+  output_dir: checkpoints/audio_image
+
+poses:
+  source: auto
+  fallback: true
+
+array:
+  rotation_rpy_deg: [0.0, 0.0, 0.0]
+  translation: [0.0, 0.0, 0.0]
+  azimuth_offset_deg: 0.0
+  flip_azimuth: false
+
+bev:
+  range_m: 6.0
+  resolution: 0.15
+  kappa_min: 4.0
+  kappa_max: 40.0
+  p_hit: 0.60
+  p_miss: 0.48
+  l_max: 15.0
+  decay_half_life_s: 6.0
+  min_range: 0.25
+  min_weight: 0.05
+  # Drop near-vertical DoAs: azimuth is degenerate there, and ODAS parks
+  # phantom/reflection tracks near the zenith.  Measured on session_01 (real
+  # source at 47-78 deg elevation, phantom track at 78-90 deg): at 89 deg the
+  # median bearing error is 1.0 deg but the worst case is 107 deg; anywhere in
+  # 75-80 deg the worst case is 1.8 deg.  Re-check this on a new rig.
+  max_elevation_deg: 78.0
+  history_len: 4
+  readout_temperature: 0.5
+
+data:
+  horizon: 20
+  warmup: 30
+  past_len: 10
+  stride: 1
+  use_ssl: true
+  use_sst: true
+  max_doa_tokens: 8
+  doa_frames: 4
+  min_sst_activity: 0.1
+  traj_scale: auto
+  goal_scale: 8.0
+  val_fraction: 0.2
+
+  # ── image branch ───────────────────────────────────────────────────────
+  use_image: true
+  image_size: [224, 392]    # (H, W); both must be multiples of the ViT patch (14)
+  image_frames: 1           # >1 activates the temporal attention fusion
+
+model:
+  traj_dim: 2
+  cond_dim: 256
+  predict_source: true
+  cond_dropout: 0.0
+  guidance_scale: 1.0
+  encoders:
+    bev_dim: 256
+    bev_widths: [32, 64, 128]
+    bev_pool: 4
+    doa_token_dim: 128
+    doa_dim: 128
+    ego_dim: 64
+    image_dim: 256
+    dropout: 0.0
+  vit:
+    backbone: vit_base_patch14_dinov2.lvd142m
+    pretrained: true
+    freeze_backbone: true   # only adapters + temporal fusion train
+    use_adapter: true
+    adapter_dim: 64
+    adapter_layers: [6, 7, 8, 9, 10, 11]
+    grad_checkpointing: true
+  unet:
+    down_dims: [128, 256, 512]
+    kernel_size: 5
+    n_groups: 8
+    step_embed_dim: 128
+
+diffusion:
+  num_timesteps: 100
+  beta_schedule: cosine
+  prediction_type: epsilon
+  clip_sample: true
+  clip_range: 1.5
+  num_inference_steps: 16
+  ddim_eta: 0.0
+
+training:
+  num_epochs: 200
+  # The frozen ViT dominates memory even with grad checkpointing, so the
+  # batch is smaller and workers fewer than in the audio-only config.
+  batch_size: 16
+  num_workers: 6
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-6
+  betas: [0.95, 0.999]
+  warmup_steps: 500
+  grad_clip: 1.0
+  amp: true
+  use_ema: true
+  ema_decay: 0.999
+  source_loss_weight: 0.1
+  log_every: 20
+  val_every: 1
+  # Log the trajectory-vs-DoA figure at every validation: it is the main
+  # qualitative signal and costs one matplotlib render per epoch.
+  viz_every: 1
+  save_every: 10
+
+logging:
+  use_comet: true
+  comet_project: echodiffusion
+  comet_workspace: iana-zhura
+  # Left null on purpose: this file is tracked by git, so the key lives in
+  # ~/.comet.config (or COMET_API_KEY). Resolution order is
+  # config -> COMET_API_KEY -> ~/.comet.config.
+  comet_api_key: null

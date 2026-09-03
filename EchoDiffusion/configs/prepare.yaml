@@ -1,0 +1,33 @@
+# Dataset preparation: rosbag2 sessions -> episodes.
+# Used by scripts/prepare_dataset.py; training configs never read this file.
+
+dataset:
+  bag_root: /home/zhura/datasets/echodiffusion
+  out_root: data/episodes
+  sample_rate_hz: 10.0        # must match data.horizon's assumed control rate
+
+  # Fraction of sessions held out for validation.  Split is by *session*, never
+  # by window, so no trajectory can leak across the split.
+  val_fraction: 0.2
+  seed: 42
+
+  topics:
+    ssl: /ssl                 # odas_ros_msgs/OdasSslArrayStamped
+    sst: /sst                 # odas_ros_msgs/OdasSstArrayStamped
+    # Not yet recorded in the current bags -- absent topics are skipped and
+    # the corresponding arrays stay NaN, which the dataset then filters out.
+    odometry: /odom           # nav_msgs/Odometry
+    vicon_robot: /vicon/robot/pose      # geometry_msgs/PoseStamped or TransformStamped
+    vicon_source: /vicon/source/pose    # GT pose of the speaker
+    image: /camera/color/image_raw      # sensor_msgs/Image or CompressedImage
+
+  # Which pose stream to warn about when missing.  Both are stored when both
+  # are present; the training config picks between them.
+  pose_source: auto
+
+  save_images: true           # no-op when no image topic was recorded
+  image_quality: 92
+
+  # Fallback when the speaker never moved and no Vicon topic exists.
+  # World-frame (x, y) in the same frame as the robot poses.  null = unknown.
+  static_source_pose: null

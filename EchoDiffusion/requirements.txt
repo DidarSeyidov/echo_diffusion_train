@@ -1,0 +1,32 @@
+# Core
+torch>=2.1.0
+torchvision>=0.16.0
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Vision (only needed when data.use_image: true)
+timm>=0.9.0                # DINOv2 backbones
+einops>=0.6.1
+opencv-python>=4.8.0
+pillow>=9.5.0
+
+# Diffusion utilities (DDPM/DDIM schedulers)
+diffusers>=0.21.0
+
+# Experiment tracking
+comet-ml>=3.35.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Config / misc
+pyyaml>=6.0
+tqdm>=4.65.0
+
+# Testing
+pytest>=7.4.0
+
+# Optional: only for bags whose message layouts EchoDiffusion does not
+# decode natively (the built-in CDR reader covers ODAS + audio_utils +
+# sensor_msgs/Image + nav_msgs/Odometry + geometry_msgs poses).
+# rosbags>=0.10.0

@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data / datasets (episodes are regenerated with scripts/prepare_dataset.py).
+# Anchored to the repo root with a leading slash -- a bare "data/" would also
+# match the echodiffusion/data/ source package.
+/data/
+/datasets/
+/episodes/
+*.db3
+*.bag
+*.mcap
+*.h5
+*.hdf5
+*.pkl
+
+# Checkpoints, logs, outputs
+checkpoints/
+logs/
+outputs/
+runs/
+results/
+viz/
+wandb/
+*.pth
+*.pt
+*.ckpt
+
+# Comet ML
+.comet.config
+
+# Environment
+.env
+.env.local
+
+# Media
+*.mp4
+*.avi
+*.wav
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
